@@ -209,6 +209,7 @@ const Chat: React.FC<ChatProps> = ({ chatId, client }) => {
                   type="button"
                   className="btn btn-primary"
                   onClick={() => raiseIssue()}
+                  disabled={messages.length === 0}
               >
                 {isLoading ?
                     <span className="loading loading-spinner"></span> :
