@@ -329,7 +329,7 @@ def process_message(opper: Opper, messages):
 
 
 @trace
-def bake_response(opper: Opper, messages, analysis=None):
+def bake_response(opper: Opper, messages, chat_id: str, analysis=None):
     """Generate a response using Opper."""
     # Create a copy of messages for the AI
     ai_messages = messages.copy()
@@ -393,17 +393,16 @@ def bake_response(opper: Opper, messages, analysis=None):
             MODELS
         )
         print(f"Switched AI to {MODELS[current_model_idx]}")
+        return bad_count
 
     else:
         bad_count = 0
 
     if bad_count >= MAX_BAD_RESPONSES:
         bad_count = 0
-        return "Can't give an accurate answer. Please contact customer support"
-        # This part has to be changed by SANTIAGO
+        send_customer_sms(chat_id)
 
-    return response, bad_count
-
+    return response
 
 #### Routes ####
 
@@ -529,7 +528,7 @@ async def add_chat_message(
     # Process the message with intent detection and knowledge base lookup
     with opper.traces.start("customer_support_chat"):
         analysis = process_message(opper, formatted_messages)
-        response, bad_count = bake_response(opper, formatted_messages, analysis)
+        response, bad_count = bake_response(opper, formatted_messages, chat_id, analysis)
 
     # Add assistant response to database
     (response_id, response_ts) = db.add_message(chat_id, "assistant", response)
