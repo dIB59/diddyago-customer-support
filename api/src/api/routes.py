@@ -185,7 +185,7 @@ def determine_intent(opper: Opper, messages):
         - service: User needs information about service appointments or technicians
         - parts: User is looking for spare parts or replacement components
         - unsupported: The request doesn't fit any of the above categories
-        """,
+        If you feel as if the prompt of request is not answered sufficiently or the user explicitly says something like "you are not answering my request, then return " I believe I did not sufficiently respond to your request, so I will refer this to someone I believe is better suited to handle this request."        """,
         input={"messages": messages},
         output_type=IntentClassification
     )
