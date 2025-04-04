@@ -9,7 +9,6 @@ from .clients.couchbase import CouchbaseChatClient
 from .utils import log
 
 logger = log.get_logger(__name__)
-
 router = APIRouter()
 
 
