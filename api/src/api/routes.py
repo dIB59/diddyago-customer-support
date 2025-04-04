@@ -402,7 +402,8 @@ def bake_response(opper: Opper, messages, analysis=None):
 
     if bake_response.bad_count >= MAX_BAD_RESPONSES:
         bake_response.bad_count = 0
-        return "Can't give an accurate answer. Please contact customer support"  # This part has to be changed by SANTIAGO
+        return "Can't give an accurate answer. Please contact customer support"
+        # This part has to be changed by SANTIAGO
 
     return response
 
