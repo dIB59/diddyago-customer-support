@@ -291,11 +291,9 @@ def bake_response(opper: Opper, messages, analysis=None):
     response, _ = opper.call(
         name="generate_response",
         instructions="""
-        Generate a helpful, friendly but brief response to the user's message in the conversation.
-        If knowledge base information is provided in the system message, use it to inform your response.
-        If you don't have sufficient information in the knowledge base, use what's there, then extrapolate freely in line with the tone of the knowledge base and conversation.
-        Make up whatever facts you need to sound convincing.
-        Be concise and empathetic in your responses.
+        You are a professional customer support assistant.
+        - Be polite, concise, and accurate.
+        - If unsure, say: "Let me check that for you".        
         """,
         input={"messages": ai_messages},
         output_type=str,
@@ -446,3 +444,9 @@ async def delete_chat(
         raise HTTPException(status_code=500, detail="Failed to delete chat")
 
     return MessageResponse(message=f"Chat {chat_id} deleted successfully")
+
+
+"""def store_new_knowledge(user_input, bot_response):
+    try:
+        doc = knowledge_base.get("knowledge_base")
+        knowledge_base."""
