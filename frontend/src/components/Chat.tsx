@@ -131,6 +131,10 @@ const Chat: React.FC<ChatProps> = ({ chatId, client }) => {
     );
   };
 
+  function raiseIssue() {
+
+  }
+
   return (
     <div className="flex-1 flex flex-col h-full">
       <div className="flex-1 p-4 overflow-y-auto">
@@ -184,23 +188,34 @@ const Chat: React.FC<ChatProps> = ({ chatId, client }) => {
           <div className="form-control">
             <div className="input-group flex">
               <input
-                type="text"
-                className="input flex-grow"
-                placeholder="Type your message..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isLoading}
+                  type="text"
+                  className="input flex-grow"
+                  placeholder="Type your message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={isLoading}
               />
               <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isLoading || !input.trim()}
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isLoading || !input.trim()}
               >
                 {isLoading ?
-                  <span className="loading loading-spinner"></span> :
-                  'Send'
+                    <span className="loading loading-spinner"></span> :
+                    'Send'
                 }
               </button>
+              <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => raiseIssue()}
+              >
+                {isLoading ?
+                    <span className="loading loading-spinner"></span> :
+                    'Raise Issue'
+                }
+              </button>
+
             </div>
           </div>
         </form>
