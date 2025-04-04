@@ -269,6 +269,12 @@ def bake_response(opper: Opper, messages, analysis=None):
     """Generate a response using Opper."""
     # Create a copy of messages for the AI
     ai_messages = messages.copy()
+    MAX_BAD_RESPONSES = 3
+    MODELS = ["openai/gpt-4", "anthropic/claude-3-sonnet", "fireworks/deepseek-v3", "gcp/gemini-1.5-pro-001-eu", "anthropic/claude-3.7-sonnet-20250219"]
+
+    if not hasattr(bake_response, "bad_count"):
+        bake_response.bad_count = 0
+        bake_response.current_model_idx = 0
 
     # Add function message with analysis if provided
     if analysis:
@@ -290,6 +296,7 @@ def bake_response(opper: Opper, messages, analysis=None):
     # Generate response using Opper
     response, _ = opper.call(
         name="generate_response",
+        model = "openai/gpt-4",
         instructions="""
         You are a professional customer support assistant.
         - Be polite, concise, and accurate.
@@ -297,8 +304,26 @@ def bake_response(opper: Opper, messages, analysis=None):
         """,
         input={"messages": ai_messages},
         output_type=str,
-    )
+        )
+
+    # get_response_quality - Adi and Farhan implement (name might be changed)
+    is_bad_response = get_response_quality(response)  # True if response is inaccurate, keep count of that
+
+    if is_bad_response:
+        bake_response.bad_count += 1
+
+        bake_response.current_model_idx = (bake_response.current_model_idx + 1) % len(MODELS)
+        print(f"Switched AI to {MODELS[bake_response.current_model_idx]}")
+
+    else:
+        bake_response.bad_count = 0
+
+    if bake_response.bad_count >= MAX_BAD_RESPONSES:
+        bake_response.bad_count = 0
+        return "Can't give an accurate answer. Please contact customer support" # This part has to be changed by SANTIAGO
+
     return response
+
 
 #### Routes ####
 
