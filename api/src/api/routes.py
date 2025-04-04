@@ -406,6 +406,16 @@ def bake_response(opper: Opper, messages, analysis=None):
 
     return response
 
+async def send_customer_sms(chat_id):
+    response = requests.post(
+        "https://api.46elks.com/a1/sms",
+        auth=("u22103b13d593cb9f70c215aaf3143e7c", "B5D9B979853C666B26D7272B7B078997"),
+        data={
+            "from": "customer",
+            "to": "+46735001793",
+            "message": f"Help from {chat_id}",
+        },
+    )
 
 #### Routes ####
 
@@ -445,19 +455,6 @@ async def create_chat(
         updated_at=str(chat["updated_at"]),
         metadata=chat["metadata"],
     )
-
-
-async def send_customer_sms(chat_id):
-    response = requests.post(
-        "https://api.46elks.com/a1/sms",
-        auth=("u22103b13d593cb9f70c215aaf3143e7c", "B5D9B979853C666B26D7272B7B078997"),
-        data={
-            "from": "customer",
-            "to": "+46735001793",
-            "message": f"Help from {chat_id}",
-        },
-    )
-
 
 @router.get("/chats/{chat_id}", response_model=ChatSession)
 async def get_chat(
