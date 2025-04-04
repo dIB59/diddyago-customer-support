@@ -373,7 +373,7 @@ def bake_response(opper: Opper, messages, chat_id: str, analysis=None):
     # Generate response using Opper
     response, _ = opper.call(
         name="generate_response",
-        model="openai/gpt-4",
+        model=MODELS[current_model_idx],
         instructions="""
         You are a professional customer support assistant.
         - Be polite, concise, and accurate.
@@ -388,21 +388,18 @@ def bake_response(opper: Opper, messages, chat_id: str, analysis=None):
 
     if is_bad_response:
         bad_count += 1
-
-        current_model_idx = (current_model_idx + 1) % len(
-            MODELS
-        )
-        print(f"Switched AI to {MODELS[current_model_idx]}")
-        return bad_count
+        if bad_count >= MAX_BAD_RESPONSES:
+            bad_count = 0
+            send_customer_sms(chat_id)
+        else:
+            # Switch to next model
+            current_model_idx = (current_model_idx + 1) % len(MODELS)
+            print(f"Switched AI to {MODELS[current_model_idx]}")
 
     else:
         bad_count = 0
 
-    if bad_count >= MAX_BAD_RESPONSES:
-        bad_count = 0
-        send_customer_sms(chat_id)
-
-    return response
+    return response, bad_count
 
 #### Routes ####
 
