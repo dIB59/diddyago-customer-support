@@ -63,5 +63,4 @@ export class ApiClientRest implements ApiClientInterface {
     public delete<T = null>(path: string, on_error: (messages: string[]) => void): Promise<T> {
         return this.request<T>('DELETE', path, on_error) as Promise<T>;
     }
-
 }

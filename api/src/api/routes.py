@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Path, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import Annotated, Any, Literal
+import requests
+
 
 from opperai import Opper, trace
 from .clients.couchbase import CouchbaseChatClient
@@ -212,7 +214,7 @@ def determine_intent(opper: Opper, messages):
         - service: User needs information about service appointments or technicians
         - parts: User is looking for spare parts or replacement components
         - unsupported: The request doesn't fit any of the above categories
-        If you feel as if the prompt of request is not answered sufficiently or the user explicitly says something like "you are not answering my request, then return " I believe I did not sufficiently respond to your request, so I will refer this to someone I believe is better suited to handle this request."        """,
+        """,
         input={"messages": messages},
         output_type=IntentClassification,
     )
@@ -252,7 +254,14 @@ def search_knowledge_base(intent, query):
 
         # Simple relevance scoring
         content_text = (item["title"] + " " + item["content"]).lower()
-        score = sum(1 for term in query_terms if term in content_text)
+        temp_array = []
+        score = 0
+
+        for term in query_terms:
+            if term in content_text:
+                if term not in temp_array:
+                    score += 1
+                    temp_array.append(term)
 
         if score > 0:
             # Create a copy with relevance score
@@ -306,6 +315,18 @@ def bake_response(opper: Opper, messages, analysis=None):
     """Generate a response using Opper."""
     # Create a copy of messages for the AI
     ai_messages = messages.copy()
+    MAX_BAD_RESPONSES = 3
+    MODELS = [
+        "openai/gpt-4",
+        "anthropic/claude-3-sonnet",
+        "fireworks/deepseek-v3",
+        "gcp/gemini-1.5-pro-001-eu",
+        "anthropic/claude-3.7-sonnet-20250219",
+    ]
+
+    if not hasattr(bake_response, "bad_count"):
+        bake_response.bad_count = 0
+        bake_response.current_model_idx = 0
 
     # Add function message with analysis if provided
     if analysis:
@@ -335,16 +356,36 @@ def bake_response(opper: Opper, messages, analysis=None):
     # Generate response using Opper
     response, _ = opper.call(
         name="generate_response",
+        model="openai/gpt-4",
         instructions="""
-        Generate a helpful, friendly but brief response to the user's message in the conversation.
-        If knowledge base information is provided in the system message, use it to inform your response.
-        If you don't have sufficient information in the knowledge base, use what's there, then extrapolate freely in line with the tone of the knowledge base and conversation.
-        Make up whatever facts you need to sound convincing.
-        Be concise and empathetic in your responses.
+        You are a professional customer support assistant.
+        - Be polite, concise, and accurate.
+        - If unsure, say: "Let me check that for you".        
         """,
         input={"messages": ai_messages},
         output_type=str,
     )
+
+    # get_response_quality - Adi and Farhan implement (name might be changed)
+    is_bad_response = get_response_quality(
+        response
+    )  # True if response is inaccurate, keep count of that
+
+    if is_bad_response:
+        bake_response.bad_count += 1
+
+        bake_response.current_model_idx = (bake_response.current_model_idx + 1) % len(
+            MODELS
+        )
+        print(f"Switched AI to {MODELS[bake_response.current_model_idx]}")
+
+    else:
+        bake_response.bad_count = 0
+
+    if bake_response.bad_count >= MAX_BAD_RESPONSES:
+        bake_response.bad_count = 0
+        return "Can't give an accurate answer. Please contact customer support"  # This part has to be changed by SANTIAGO
+
     return response
 
 
@@ -385,6 +426,18 @@ async def create_chat(
         created_at=str(chat["created_at"]),
         updated_at=str(chat["updated_at"]),
         metadata=chat["metadata"],
+    )
+
+
+async def send_customer_sms(chat_id):
+    response = requests.post(
+        "https://api.46elks.com/a1/sms",
+        auth=("u22103b13d593cb9f70c215aaf3143e7c", "B5D9B979853C666B26D7272B7B078997"),
+        data={
+            "from": "customer",
+            "to": "+46735001793",
+            "message": f"Help from {chat_id}",
+        },
     )
 
 
@@ -500,3 +553,9 @@ async def delete_chat(
         raise HTTPException(status_code=500, detail="Failed to delete chat")
 
     return MessageResponse(message=f"Chat {chat_id} deleted successfully")
+
+
+"""def store_new_knowledge(user_input, bot_response):
+    try:
+        doc = knowledge_base.get("knowledge_base")
+        knowledge_base."""
