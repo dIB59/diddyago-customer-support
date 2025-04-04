@@ -133,6 +133,13 @@ const Chat: React.FC<ChatProps> = ({ chatId, client }) => {
 
   function raiseIssue() {
 
+    const on_error = () => {
+
+      // error handeled by backend
+    };
+    const count = 3;
+    client.post('/api/chats/${chatId}/HumanError', on_error, {count});
+  
   }
 
   return (
