@@ -193,6 +193,8 @@ def determine_intent(opper: Opper, messages):
     )
     return intent
 
+total_results = []
+
 @trace
 def search_knowledge_base(intent, query):
     """Search the knowledge base for information relevant to the user's query."""
@@ -235,9 +237,23 @@ def search_knowledge_base(intent, query):
             result["relevance_score"] = score / len(query_terms)  # Normalize score
             results.append(result)
 
+    avg_result = sum(results) / len(results)
+    total_results.append(avg_result)
+
     # Sort by relevance and limit results
     results.sort(key=lambda x: x["relevance_score"], reverse=True)
     return results[:5]  # Return top 5 results
+
+def get_response_quality():
+    response_quality = False
+    if len(total_results) >= 3:
+        old_i = 0
+        for i in total_results:
+            if i > old_i:
+                old_i = i
+            else:
+                response_quality = True
+    return response_quality
 
 @trace
 def process_message(opper: Opper, messages):
