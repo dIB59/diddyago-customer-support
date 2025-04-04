@@ -215,7 +215,7 @@ const Chat: React.FC<ChatProps> = ({ chatId, client }) => {
               <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => raiseIssue()}
+                  //onClick={() => raiseIssue()}
                   disabled={messages.length === 0}
               >
                 {isLoading ?
