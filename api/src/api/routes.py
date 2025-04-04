@@ -342,9 +342,8 @@ def bake_response(opper: Opper, messages, analysis=None):
         "anthropic/claude-3.7-sonnet-20250219",
     ]
 
-    if not hasattr(bake_response, "bad_count"):
-        bake_response.bad_count = 0
-        bake_response.current_model_idx = 0
+    bad_count = 0
+    current_model_idx = 0
 
     # Add function message with analysis if provided
     if analysis:
@@ -385,27 +384,25 @@ def bake_response(opper: Opper, messages, analysis=None):
     )
 
     # get_response_quality - Adi and Farhan implement (name might be changed)
-    is_bad_response = get_response_quality(
-        response
-    )  # True if response is inaccurate, keep count of that
+    is_bad_response = get_response_quality()  # True if response is inaccurate, keep count of that
 
     if is_bad_response:
-        bake_response.bad_count += 1
+        bad_count += 1
 
-        bake_response.current_model_idx = (bake_response.current_model_idx + 1) % len(
+        current_model_idx = (current_model_idx + 1) % len(
             MODELS
         )
-        print(f"Switched AI to {MODELS[bake_response.current_model_idx]}")
+        print(f"Switched AI to {MODELS[current_model_idx]}")
 
     else:
-        bake_response.bad_count = 0
+        bad_count = 0
 
-    if bake_response.bad_count >= MAX_BAD_RESPONSES:
-        bake_response.bad_count = 0
+    if bad_count >= MAX_BAD_RESPONSES:
+        bad_count = 0
         return "Can't give an accurate answer. Please contact customer support"
         # This part has to be changed by SANTIAGO
 
-    return response
+    return response, bad_count
 
 
 #### Routes ####
@@ -532,7 +529,7 @@ async def add_chat_message(
     # Process the message with intent detection and knowledge base lookup
     with opper.traces.start("customer_support_chat"):
         analysis = process_message(opper, formatted_messages)
-        response = bake_response(opper, formatted_messages, analysis)
+        response, bad_count = bake_response(opper, formatted_messages, analysis)
 
     # Add assistant response to database
     (response_id, response_ts) = db.add_message(chat_id, "assistant", response)
